@@ -36,6 +36,10 @@
                             <input is="emby-checkbox" type="checkbox" class="chkOnResume" />
                             <span>Resume</span>
                         </label>
+                        <label class="checkboxContainer" style="float:left; width:auto; padding-right:10px">
+                                        <input is="emby-checkbox" type="checkbox" class="chkNotifications" />
+                                        <span>Notifications</span>
+                                    </label>
                     </div>
                     <div>
                         <h3>Media Types</h3>
@@ -52,6 +56,13 @@
                                 <span>Songs</span>
                             </label>
                     </div>
+                    <div><h3>Notifications</h3>
+                        <label class="checkboxContainer" style="float:left; width:auto; padding-right:10px">
+                                        <input is="emby-checkbox" type="checkbox" class="chkNotifications" />
+                                        <span>Notifications</span>
+                                    </label>
+                    </div>
+
                 </div>
                 <button title="Delete" class="btnDeleteDevice paper-icon-button-light removeHook" type="button" is="paper-icon-button-light"><i class="md-icon">delete</i></button>
 
@@ -62,7 +73,7 @@
             <div class="content-primary">
 
                 <form class="smtpConfigurationForm">
-                    <div id="itemTemplate" class="paperList" style="display:none;">
+                    <!-- <div id="itemTemplate" class="paperList" style="display:none;">
                         <div class="listItem">
                             <div class="listItemBody two-line">
                                 <div>
@@ -86,6 +97,10 @@
                                         <input is="emby-checkbox" type="checkbox" class="chkOnResume" />
                                         <span>Resume</span>
                                     </label>
+                                     <label class="checkboxContainer" style="float:left; width:auto; padding-right:10px">
+                                        <input is="emby-checkbox" type="checkbox" class="chkNotifications" />
+                                        <span>Notifications</span>
+                                    </label>
                                 </div>
                                 <div>
                                     <h3>Media Types</h3>
@@ -102,11 +117,13 @@
                                         <span>Songs</span>
                                     </label>
                                 </div>
+                              
+
                             </div>
                             <button title="Delete" class="btnDeleteDevice paper-icon-button-light removeHook" type="button" is="paper-icon-button-light"><i class="md-icon">delete</i></button>
 
                         </div>
-                    </div>
+                    </div> -->
 
                     
                                  <!--
@@ -166,12 +183,12 @@
                     $('#testNotification', page).on('click', function (event) {
 
                         Dashboard.showLoadingMsg();
-                        var a = $('#itemTemplate').html();
+                        var a = $('#itemTemplate').clone();
 
-                        var b =$('#Hooks', page).append(
+                        $('#Hooks', page).append(
                             a
                             );
-                        $(b).show();
+                        $(a).show();
 
                         Dashboard.hideLoadingMsg();
 
@@ -199,7 +216,8 @@
                                     withMovies: $(this).find('.chkMovies').first().checked(),
                                     withEpisodes: $(this).find('.chkEpisodes').first().checked(),
                                     withSongs: $(this).find('.chkSongs').first().checked(),
-
+                                    withNotifications: $(this).find('.chkNotifications').first().checked()
+                                    
                                 }
                                 );
                         });
@@ -241,6 +259,8 @@
                             $(a).find('.chkMovies').first().checked(config.Hooks[i].withMovies || false);
                             $(a).find('.chkEpisodes').first().checked(config.Hooks[i].withEpisodes || false);
                             $(a).find('.chkSongs').first().checked(config.Hooks[i].withSongs || false);
+                            $(a).find('.chkNotifications').first().checked(config.Hooks[i].withNotifications || false);
+                            
 
 
                         }

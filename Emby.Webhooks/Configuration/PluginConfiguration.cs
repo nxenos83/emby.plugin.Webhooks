@@ -25,6 +25,7 @@ namespace Emby.Webhooks.Configuration
             public bool withMovies { get; set; }
             public bool withEpisodes { get; set; }
             public bool withSongs { get; set; }
+            public bool withNotifications { get; set; }
         }
     }
 }

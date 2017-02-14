@@ -13,11 +13,14 @@ using MediaBrowser.Model.Logging;
 using MediaBrowser.Model.Serialization;
 using MediaBrowser.Common.Net;
 using System.Net.Http;
+using MediaBrowser.Controller.Notifications;
+using MediaBrowser.Controller.Entities;
+using System.Threading;
 
 namespace Emby.Webhooks
 {
    
-    class Webhooks : IServerEntryPoint
+    public class Webhooks : IServerEntryPoint, INotificationService
     {
         private readonly ISessionManager _sessionManager;
         private readonly IUserDataManager _userDataManager;
@@ -43,6 +46,11 @@ namespace Emby.Webhooks
         }
 
         public static Webhooks Instance { get; private set; }
+
+        public string Name
+        {
+            get{ return "Webhooks";}
+        }
 
         public Webhooks(ISessionManager sessionManager, IJsonSerializer jsonSerializer, IHttpClient httpClient, ILogManager logManager, IUserDataManager userDataManager)
         {
@@ -204,6 +212,30 @@ namespace Emby.Webhooks
 
             return (sr.ReadToEnd());
             */
+        }
+
+        public Task SendNotification(UserNotification request, CancellationToken cancellationToken)
+        {
+            return SendNotifcationHook(request);
+        }
+
+        public async Task<bool> SendNotifcationHook(UserNotification request)
+        {
+            var hooks = Plugin.Instance.Configuration.Hooks.Where(i => i.withNotifications);
+            var json = _jsonSerializer.SerializeToString(request);
+            _logger.Debug(json);
+
+            foreach (var h in hooks)
+            {
+                await SendHooks(h, json);
+            }
+            return true;
+        }
+
+        public bool IsEnabledForUser(User user)
+        {
+
+            return user.Policy.IsAdministrator;
         }
     }
 }
