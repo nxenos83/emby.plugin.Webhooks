@@ -37,9 +37,11 @@
                             <span>Resume</span>
                         </label>
                         <label class="checkboxContainer" style="float:left; width:auto; padding-right:10px">
-                                        <input is="emby-checkbox" type="checkbox" class="chkNotifications" />
-                                        <span>Notifications</span>
-                                    </label>
+                            <input is="emby-checkbox" type="checkbox" class="chkOnItemAdded" />
+                            <span>Item Added</span>
+                        </label>
+
+                                    
                     </div>
                     <div>
                         <h3>Media Types</h3>
@@ -49,22 +51,19 @@
                             </label>
                             <label class="checkboxContainer" style="float:left; width:auto; padding-right:10px">
                                 <input is="emby-checkbox" type="checkbox" class="chkEpisodes" />
-                                <span>Episodes</span>
+                                <span>TV Shows</span>
                             </label>
                             <label class="checkboxContainer" style="float:left; width:auto; padding-right:10px">
                                 <input is="emby-checkbox" type="checkbox" class="chkSongs" />
-                                <span>Songs</span>
+                                <span>Music</span>
                             </label>
                     </div>
-                    <div><h3>Notifications</h3>
-                        <label class="checkboxContainer" style="float:left; width:auto; padding-right:10px">
-                                        <input is="emby-checkbox" type="checkbox" class="chkNotifications" />
-                                        <span>Notifications</span>
-                                    </label>
-                    </div>
+                    
+                    
 
-                </div>
-                <button title="Delete" class="btnDeleteDevice paper-icon-button-light removeHook" type="button" is="paper-icon-button-light"><i class="md-icon">delete</i></button>
+                
+               </div>
+                 <button title="Delete" class="btnDeleteDevice paper-icon-button-light removeHook" type="button" is="paper-icon-button-light"><i class="md-icon">delete</i></button>
 
             </div>
         </div>
@@ -216,7 +215,7 @@
                                     withMovies: $(this).find('.chkMovies').first().checked(),
                                     withEpisodes: $(this).find('.chkEpisodes').first().checked(),
                                     withSongs: $(this).find('.chkSongs').first().checked(),
-                                    withNotifications: $(this).find('.chkNotifications').first().checked()
+                                    onItemAdded: $(this).find('.chkOnItemAdded').first().checked()
                                     
                                 }
                                 );
@@ -259,7 +258,7 @@
                             $(a).find('.chkMovies').first().checked(config.Hooks[i].withMovies || false);
                             $(a).find('.chkEpisodes').first().checked(config.Hooks[i].withEpisodes || false);
                             $(a).find('.chkSongs').first().checked(config.Hooks[i].withSongs || false);
-                            $(a).find('.chkNotifications').first().checked(config.Hooks[i].withNotifications || false);
+                            $(a).find('.chkOnItemAdded').first().checked(config.Hooks[i].onItemAdded || false);
                             
 
 

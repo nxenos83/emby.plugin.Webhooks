@@ -9,7 +9,7 @@ namespace Emby.Webhooks
     public class envelope
     {
         
-        public string _event { get; set; }
+        public string @event { get; set; }
         public bool user { get; set; }
         public bool owner { get; set; }
         public Account Account { get; set; }

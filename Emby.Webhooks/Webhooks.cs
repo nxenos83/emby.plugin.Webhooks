@@ -14,18 +14,19 @@ using MediaBrowser.Model.Serialization;
 using MediaBrowser.Common.Net;
 using System.Net.Http;
 using MediaBrowser.Controller.Notifications;
-using MediaBrowser.Controller.Entities;
 using System.Threading;
+using MediaBrowser.Controller.Entities;
 
 namespace Emby.Webhooks
 {
    
-    public class Webhooks : IServerEntryPoint, INotificationService
+    public class Webhooks : IServerEntryPoint
     {
         private readonly ISessionManager _sessionManager;
         private readonly IUserDataManager _userDataManager;
         private readonly ILogger _logger;
         private readonly IJsonSerializer _jsonSerializer;
+        private readonly ILibraryManager _libraryManager;
 
         private List<PauseControl> pauseControl = new List<PauseControl>();
         public class PauseControl
@@ -52,10 +53,10 @@ namespace Emby.Webhooks
             get{ return "Webhooks";}
         }
 
-        public Webhooks(ISessionManager sessionManager, IJsonSerializer jsonSerializer, IHttpClient httpClient, ILogManager logManager, IUserDataManager userDataManager)
+        public Webhooks(ISessionManager sessionManager, IJsonSerializer jsonSerializer, IHttpClient httpClient, ILogManager logManager, IUserDataManager userDataManager, ILibraryManager libraryManager)
         {
             _logger = logManager.GetLogger(Plugin.Instance.Name);
-
+            _libraryManager = libraryManager;
             _sessionManager = sessionManager;
             _userDataManager = userDataManager;
             _jsonSerializer = jsonSerializer;
@@ -69,65 +70,66 @@ namespace Emby.Webhooks
             _sessionManager.PlaybackStart -= PlaybackStart;
             _sessionManager.PlaybackStopped -= PlaybackStopped;
             _sessionManager.PlaybackProgress -= PlaybackProgress;
+
+            _libraryManager.ItemAdded -= ItemAdded;
         }
     
-
         public void Run()
         {
             _sessionManager.PlaybackStart += PlaybackStart;
             _sessionManager.PlaybackStopped += PlaybackStopped;
             _sessionManager.PlaybackProgress += PlaybackProgress;
+
+            _libraryManager.ItemAdded += ItemAdded;
         }
 
+        private void ItemAdded(object sender, ItemChangeEventArgs e) {
+            var iType = _libraryManager.GetContentType(e.Item);
+
+            var hooks = hooksByType(iType).Where(i => i.onItemAdded);
+           
+            if (hooks.Count() > 0)
+            {
+                var jsonString = buildJson(e.Item, "media.added");
+                SendHooks(hooks, jsonString);
+            }
+        }
         private void PlaybackProgress(object sender, PlaybackProgressEventArgs e)
         {
-            if (e.IsPaused & getPauseControl(e.DeviceId).wasPaused == false) {
+            var iType = _libraryManager.GetContentType(e.Item);
+
+            if (e.IsPaused & getPauseControl(e.DeviceId).wasPaused == false)
+            {
                 //Paused Event
                 getPauseControl(e.DeviceId).wasPaused = true;
 
-                var hooks = Plugin.Instance.Configuration.Hooks.Where
-                    (i => i.onPause & (
-                            (i.withMovies & e.MediaInfo.Type == "Movie")
-                            || (i.withEpisodes & e.MediaInfo.Type == "Episode")
-                            || (i.withSongs & e.MediaInfo.Type == "Song")
-                           )
-                );
-
+                var hooks = hooksByType(iType).Where(i => i.onPause);
 
                 var jsonString = buildJson(e, "media.pause");
 
                 SendHooks(hooks, jsonString);
-            }else if (e.IsPaused == false & getPauseControl(e.DeviceId).wasPaused)
+            }
+            else if (e.IsPaused == false & getPauseControl(e.DeviceId).wasPaused)
             {
                 getPauseControl(e.DeviceId).wasPaused = false;
 
-                var hooks = Plugin.Instance.Configuration.Hooks.Where
-                    (i => i.onResume & (
-                            (i.withMovies & e.MediaInfo.Type == "Movie")
-                            || (i.withEpisodes & e.MediaInfo.Type == "Episode")
-                            || (i.withSongs & e.MediaInfo.Type == "Song")
-                           )
-                );
+                var hooks = hooksByType(iType).Where(i => i.onResume);
                 var jsonString = buildJson(e, "media.resume");
 
                 SendHooks(hooks, jsonString);
             }
 
         }
-
         private void PlaybackStart(object sender, PlaybackProgressEventArgs e)
         {
             getPauseControl(e.DeviceId).wasPaused = false;
 
-            var jsonString = buildJson(e, "media.play");
+            var iType = _libraryManager.GetContentType(e.Item);
+
             //get all configured hooks for onPlay
-            var hooks = Plugin.Instance.Configuration.Hooks.Where
-                (i => i.onPlay & (
-                            (i.withMovies & e.MediaInfo.Type == "Movie")
-                            || (i.withEpisodes & e.MediaInfo.Type == "Episode")
-                            || (i.withSongs & e.MediaInfo.Type == "Song")
-                           )   
-                 );
+            var hooks = hooksByType(iType).Where(i => i.onPlay);
+
+            var jsonString = buildJson(e, "media.play");
 
             SendHooks(hooks, jsonString);
         }
@@ -142,7 +144,7 @@ namespace Emby.Webhooks
                 (i => i.onStop & (
                             (i.withMovies & e.MediaInfo.Type == "Movie")
                             || (i.withEpisodes & e.MediaInfo.Type == "Episode")
-                            || (i.withSongs & e.MediaInfo.Type == "Song")
+                            || (i.withSongs & e.MediaInfo.Type == "Audio")
                            )
                 );
             if (hooks.Count() > 0)
@@ -151,19 +153,28 @@ namespace Emby.Webhooks
                 var jsonString = buildJson(e, "media.stop");
                 SendHooks(hooks, jsonString);
             }
-         }
+        }
 
+        public IEnumerable<PluginConfiguration.Hook> hooksByType(string type)
+        {
+            return Plugin.Instance.Configuration.Hooks.Where(h =>
+                    (h.withMovies && type == "movies") ||
+                    (h.withEpisodes && type == "tvshows") ||
+                    (h.withSongs && type == "music")
+            );
+        }
+        
         public void SendHooks(IEnumerable<PluginConfiguration.Hook> hooks, string jsonString)
         {
             foreach (var h in hooks)
             {
                 //send payload
-                SendHooks(h, jsonString);
+                SendHook(h, jsonString);
 
             }
         }
-
-        public async Task<bool> SendHooks (PluginConfiguration.Hook h, string jsonString)
+       
+        public async Task<bool> SendHook (PluginConfiguration.Hook h, string jsonString)
         {
             _logger.Debug("Sending paylod to {0}", h.URL);
             _logger.Debug(jsonString);
@@ -177,12 +188,30 @@ namespace Emby.Webhooks
             }
             return true;
         }
-        
+
+        public string buildJson(BaseItem i, string trigger)
+        {
+
+            envelope j = new envelope()
+            {
+                @event = trigger,
+
+                Metadata = new Metadata()
+                {
+                    type = _libraryManager.GetContentType(i),
+                    title = i.Name,
+                    grandparentTitle = i.Parent.Parent.Name,
+                    parentTitle = i.Parent.Name,
+                    guid = i.Id.ToString()
+                }
+            };
+            return _jsonSerializer.SerializeToString(j);
+        }
 
         public string buildJson (PlaybackProgressEventArgs e, string trigger)
         {
             envelope j = new envelope() {
-                   _event = trigger,
+                   @event = trigger,
 
                    Account = new Account() { },
                    Player = new Player() {
@@ -191,8 +220,8 @@ namespace Emby.Webhooks
                    },
                    Metadata = new Metadata()
                    {
-                       type = e.MediaInfo.Type,
-                       title = e.MediaInfo.Name,
+                       type = _libraryManager.GetContentType(e.Item),
+                       title = e.Item.Name,
                        grandparentTitle = e.Item.Parent.Parent.Name,
                        parentTitle = e.Item.Parent.Name,
                        guid = e.Item.Id.ToString()
@@ -200,42 +229,6 @@ namespace Emby.Webhooks
             };
 
             return _jsonSerializer.SerializeToString(j);
-
-            /*
-            MemoryStream stream1 = new MemoryStream();
-            DataContractJsonSerializer ser = new DataContractJsonSerializer(typeof(envelope));
-            ser.WriteObject(stream1, j);
-
-            stream1.Position = 0;
-            StreamReader sr = new StreamReader(stream1);
-            
-
-            return (sr.ReadToEnd());
-            */
-        }
-
-        public Task SendNotification(UserNotification request, CancellationToken cancellationToken)
-        {
-            return SendNotifcationHook(request);
-        }
-
-        public async Task<bool> SendNotifcationHook(UserNotification request)
-        {
-            var hooks = Plugin.Instance.Configuration.Hooks.Where(i => i.withNotifications);
-            var json = _jsonSerializer.SerializeToString(request);
-            _logger.Debug(json);
-
-            foreach (var h in hooks)
-            {
-                await SendHooks(h, json);
-            }
-            return true;
-        }
-
-        public bool IsEnabledForUser(User user)
-        {
-
-            return user.Policy.IsAdministrator;
         }
     }
 }

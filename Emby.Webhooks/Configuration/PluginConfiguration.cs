@@ -18,14 +18,17 @@ namespace Emby.Webhooks.Configuration
         public class Hook
         {
             public string URL { get; set; }
+
             public bool onPlay { get; set; }
             public bool onPause { get; set; }
             public bool onStop { get; set; }
             public bool onResume { get; set; }
+            public bool onItemAdded { get; set; }
+
             public bool withMovies { get; set; }
             public bool withEpisodes { get; set; }
             public bool withSongs { get; set; }
-            public bool withNotifications { get; set; }
+            
         }
     }
 }
