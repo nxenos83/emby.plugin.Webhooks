@@ -84,14 +84,23 @@ namespace Emby.Webhooks
         }
 
         private void ItemAdded(object sender, ItemChangeEventArgs e) {
-            var iType = _libraryManager.GetContentType(e.Item);
+            _logger.Debug("Item added event");
+            _logger.Debug(_jsonSerializer.SerializeToString(e));
 
-            var hooks = hooksByType(iType).Where(i => i.onItemAdded);
+            var cType = _libraryManager.GetContentType(e.Item);
+
+            //Only concerned with video and audio files
+            if (
+                e.Item.IsVirtualItem == false &&
+                (e.Item.MediaType == "Video" || e.Item.MediaType == "Audio")
+                ) {
+                var hooks = hooksByType(cType).Where(h => h.onItemAdded);
            
-            if (hooks.Count() > 0)
-            {
-                var jsonString = buildJson(e.Item, "media.added");
-                SendHooks(hooks, jsonString);
+                if (hooks.Count() > 0)
+                {
+                    var jsonString = buildJson(e.Item, "media.added");
+                    SendHooks(hooks, jsonString);
+                }
             }
         }
         private void PlaybackProgress(object sender, PlaybackProgressEventArgs e)
@@ -100,6 +109,9 @@ namespace Emby.Webhooks
 
             if (e.IsPaused & getPauseControl(e.DeviceId).wasPaused == false)
             {
+                _logger.Debug("Playback Paused event");
+                _logger.Debug(_jsonSerializer.SerializeToString(e));
+
                 //Paused Event
                 getPauseControl(e.DeviceId).wasPaused = true;
 
@@ -111,6 +123,10 @@ namespace Emby.Webhooks
             }
             else if (e.IsPaused == false & getPauseControl(e.DeviceId).wasPaused)
             {
+                _logger.Debug("Playback Resume event");
+                _logger.Debug(_jsonSerializer.SerializeToString(e));
+
+
                 getPauseControl(e.DeviceId).wasPaused = false;
 
                 var hooks = hooksByType(iType).Where(i => i.onResume);
@@ -122,6 +138,9 @@ namespace Emby.Webhooks
         }
         private void PlaybackStart(object sender, PlaybackProgressEventArgs e)
         {
+            _logger.Debug("Playback Start event");
+            _logger.Debug(_jsonSerializer.SerializeToString(e));
+
             getPauseControl(e.DeviceId).wasPaused = false;
 
             var iType = _libraryManager.GetContentType(e.Item);
@@ -210,21 +229,24 @@ namespace Emby.Webhooks
 
         public string buildJson (PlaybackProgressEventArgs e, string trigger)
         {
-            envelope j = new envelope() {
-                   @event = trigger,
+            // User u = e.Users.FirstOrDefault();
 
-                   Account = new Account() { },
-                   Player = new Player() {
-                       title = e.ClientName,
-                       uuid = e.DeviceId.ToString()
-                   },
-                   Metadata = new Metadata()
-                   {
-                       type = _libraryManager.GetContentType(e.Item),
-                       title = e.Item.Name,
-                       grandparentTitle = e.Item.Parent.Parent.Name,
-                       parentTitle = e.Item.Parent.Name,
-                       guid = e.Item.Id.ToString()
+            envelope j = new envelope() {
+                @event = trigger,
+
+                Account = new Account() { },
+                Player = new Player() {
+                    title = e.ClientName,
+                    uuid = e.DeviceId.ToString()
+                },
+                Metadata = new Metadata()
+                {
+                    type = _libraryManager.GetContentType(e.Item),
+                    title = e.Item.Name,
+                    grandparentTitle = e.Item.Parent.Parent.Name,
+                    parentTitle = e.Item.Parent.Name,
+                    guid = e.Item.Id.ToString()
+                    
                    }
             };
 

@@ -1,0 +1,216 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Webhooks</title>
+</head>
+<body>
+    <div data-role="page" class="page type-interior pluginConfigurationPage smtpConfigurationPage" data-require="emby-select,emby-checkbox,emby-input,emby-button">
+    
+
+        <div id="itemTemplate" class="paperList" style="display:none;">
+            <div class="listItem">
+                <div class="listItemBody two-line">
+                    <div>
+                        <div class="inputContainer">
+                            <input is="emby-input" type="text" class="txtUrl"/>
+                            <div class="fieldDescription">
+                                Url
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3>Events</h3>
+                        <label class="checkboxContainer" style="float:left; width:auto; padding-right:10px">
+                            <input is="emby-checkbox" type="checkbox" class="chkOnPlay" />
+                            <span>Play</span>
+                        </label>
+                        <label class="checkboxContainer" style="float:left; width:auto; padding-right:10px">
+                            <input is="emby-checkbox" type="checkbox" class="chkOnPause" />
+                            <span>Pause</span>
+                        </label>
+                        <label class="checkboxContainer" style="float:left; width:auto; padding-right:10px">
+                            <input is="emby-checkbox" type="checkbox" class="chkOnStop" />
+                            <span>Stop</span>
+                        </label>
+                        <label class="checkboxContainer" style="float:left; width:auto; padding-right:10px">
+                            <input is="emby-checkbox" type="checkbox" class="chkOnResume" />
+                            <span>Resume</span>
+                        </label>
+                        <label class="checkboxContainer" style="float:left; width:auto; padding-right:10px">
+                            <input is="emby-checkbox" type="checkbox" class="chkOnItemAdded" />
+                            <span>Item Added</span>
+                        </label>
+
+                                    
+                    </div>
+                    <div>
+                        <h3>Media Types</h3>
+                            <label class="checkboxContainer" style="float:left; width:auto; padding-right:10px">
+                                <input is="emby-checkbox" type="checkbox" class="chkMovies" />
+                                <span>Movies</span>
+                            </label>
+                            <label class="checkboxContainer" style="float:left; width:auto; padding-right:10px">
+                                <input is="emby-checkbox" type="checkbox" class="chkEpisodes" />
+                                <span>TV Shows</span>
+                            </label>
+                            <label class="checkboxContainer" style="float:left; width:auto; padding-right:10px">
+                                <input is="emby-checkbox" type="checkbox" class="chkSongs" />
+                                <span>Music</span>
+                            </label>
+                    </div>
+                    
+                    
+
+                
+               </div>
+                 <button title="Delete" class="btnDeleteDevice paper-icon-button-light removeHook" type="button" is="paper-icon-button-light"><i class="md-icon">delete</i></button>
+
+            </div>
+        </div>
+
+        <div data-role="content">
+            <div class="content-primary">
+
+                <form class="smtpConfigurationForm">
+
+                    <h1 style="display:inline-block;vertical-align:middle;">Webhooks</h1>
+                    <button title="Add" class="raised btnAddDevice submit mini emby-button" id="testNotification"
+                            style="margin-left:1em;" type="button" is="emby-button">
+                        <i class="md-icon">add</i>
+                        <span>Add</span>
+                    </button>
+                    <div id="Hooks">
+
+
+                    </div>
+                    
+                    
+                    <br/>
+                    <div>
+                        <button is="emby-button" type="submit" class="raised button-submit block"><span>Save</span></button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+
+        <script type="text/javascript">
+
+            (function () {
+
+                var pluginId = "C55C17A0-0E7E-495B-9A1D-48BAE4D55FB3";
+
+                function loadUserConfig(page, userId) {
+
+                    Dashboard.showLoadingMsg();
+
+                    ApiClient.getPluginConfiguration(pluginId).then(function (config) {
+
+                        Dashboard.hideLoadingMsg();
+                    });
+                }
+
+                
+
+                $('.smtpConfigurationPage').on('pageinit', function (event) {
+
+                    var page = this;
+                    $(page).on("click", ".removeHook", function removeHook() {
+                        $(this).parent().parent().remove();
+                    });
+
+                    $('#testNotification', page).on('click', function (event) {
+
+                        Dashboard.showLoadingMsg();
+                        var a = $('#itemTemplate').clone();
+
+                        $('#Hooks', page).append(
+                            a
+                            );
+                        $(a).show();
+
+                        Dashboard.hideLoadingMsg();
+
+                        
+                    });
+
+                    $('.smtpConfigurationForm', page).on('submit', function (e) {
+
+                        Dashboard.showLoadingMsg();
+                        var form = this;
+
+                        var config = { Hooks: [] };
+                        $('#Hooks .listItem', form).each(function (i) {
+                            var a = $(this).find('.txtUrl').first().val();
+                            
+
+                            config.Hooks.push(
+                                {
+                                    URL: a,
+                                    onPlay: $(this).find('.chkOnPlay').first().checked(),
+                                    onPause: $(this).find('.chkOnPause').first().checked(),
+                                    onStop: $(this).find('.chkOnStop').first().checked(),
+                                    onResume: $(this).find('.chkOnResume').first().checked(),
+
+                                    withMovies: $(this).find('.chkMovies').first().checked(),
+                                    withEpisodes: $(this).find('.chkEpisodes').first().checked(),
+                                    withSongs: $(this).find('.chkSongs').first().checked(),
+                                    onItemAdded: $(this).find('.chkOnItemAdded').first().checked()
+                                    
+                                }
+                                );
+                        });
+
+                        console.log(config);
+
+                        ApiClient.updatePluginConfiguration(pluginId, config).then(
+                            Dashboard.processPluginConfigurationUpdateResult);
+                        return false;
+                    });
+                    
+                    
+
+                }).on('pageshow', function (event) {
+
+                    Dashboard.showLoadingMsg();
+
+                    var page = this;
+
+                    ApiClient.getPluginConfiguration(pluginId).then(function (config) {
+                        for (var i in config.Hooks) {
+                            var a = $('#itemTemplate').clone();
+                            
+                            $(a).show();
+                            $('#Hooks', page).append(
+                                a
+                            //'<div class="listItem"><div class="listItemBody">'+
+                            //'<input is="emby-input" type="text" class="txtUrl" label="URL:" value="' + config.Hooks[i].URL +'" /></div>' +
+                            //'<button title="Delete" class="btnDeleteDevice paper-icon-button-light removeHook" type="button" is="paper-icon-button-light"><i class="md-icon">delete</i></button>' +
+                            //'</div>'
+                            );
+                            $(a).find('.txtUrl').first().val(config.Hooks[i].URL || '');
+
+                            $(a).find('.chkOnPlay').first().checked(config.Hooks[i].onPlay || false);
+                            $(a).find('.chkOnPause').first().checked(config.Hooks[i].onPause || false);
+                            $(a).find('.chkOnStop').first().checked(config.Hooks[i].onStop || false);
+                            $(a).find('.chkOnResume').first().checked(config.Hooks[i].onResume || false);
+
+                            $(a).find('.chkMovies').first().checked(config.Hooks[i].withMovies || false);
+                            $(a).find('.chkEpisodes').first().checked(config.Hooks[i].withEpisodes || false);
+                            $(a).find('.chkSongs').first().checked(config.Hooks[i].withSongs || false);
+                            $(a).find('.chkOnItemAdded').first().checked(config.Hooks[i].onItemAdded || false);
+                            
+
+
+                        }
+                    });
+
+                    Dashboard.hideLoadingMsg();
+                });
+
+            })();
+
+        </script>
+    </div>
+</body>
+</html>
