@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Emby.Webhooks.Configuration;
-using System.Runtime.Serialization.Json;
+//using System.Runtime.Serialization.Json;
 using System.IO;
 using MediaBrowser.Model.Logging;
 using MediaBrowser.Model.Serialization;
@@ -19,7 +19,7 @@ using MediaBrowser.Controller.Entities;
 
 namespace Emby.Webhooks
 {
-   
+
     public class Webhooks : IServerEntryPoint
     {
         private readonly ISessionManager _sessionManager;
@@ -27,6 +27,7 @@ namespace Emby.Webhooks
         private readonly ILogger _logger;
         private readonly IJsonSerializer _jsonSerializer;
         private readonly ILibraryManager _libraryManager;
+        private readonly IHttpClient _httpClient;
 
         private List<PauseControl> pauseControl = new List<PauseControl>();
         public class PauseControl
@@ -50,7 +51,7 @@ namespace Emby.Webhooks
 
         public string Name
         {
-            get{ return "Webhooks";}
+            get { return "Webhooks"; }
         }
 
         public Webhooks(ISessionManager sessionManager, IJsonSerializer jsonSerializer, IHttpClient httpClient, ILogManager logManager, IUserDataManager userDataManager, ILibraryManager libraryManager)
@@ -59,6 +60,7 @@ namespace Emby.Webhooks
             _libraryManager = libraryManager;
             _sessionManager = sessionManager;
             _userDataManager = userDataManager;
+            _httpClient = httpClient;
             _jsonSerializer = jsonSerializer;
 
             Instance = this;
@@ -73,7 +75,7 @@ namespace Emby.Webhooks
 
             _libraryManager.ItemAdded -= ItemAdded;
         }
-    
+
         public void Run()
         {
             _sessionManager.PlaybackStart += PlaybackStart;
@@ -83,7 +85,8 @@ namespace Emby.Webhooks
             _libraryManager.ItemAdded += ItemAdded;
         }
 
-        private void ItemAdded(object sender, ItemChangeEventArgs e) {
+        private void ItemAdded(object sender, ItemChangeEventArgs e)
+        {
             _logger.Debug("Item added event");
             _logger.Debug(_jsonSerializer.SerializeToString(e));
 
@@ -93,9 +96,10 @@ namespace Emby.Webhooks
             if (
                 e.Item.IsVirtualItem == false &&
                 (e.Item.MediaType == "Video" || e.Item.MediaType == "Audio")
-                ) {
+                )
+            {
                 var hooks = hooksByType(cType).Where(h => h.onItemAdded);
-           
+
                 if (hooks.Count() > 0)
                 {
                     var jsonString = buildJson(e.Item, "media.added");
@@ -182,7 +186,7 @@ namespace Emby.Webhooks
                     (h.withSongs && type == "music")
             );
         }
-        
+
         public void SendHooks(IEnumerable<PluginConfiguration.Hook> hooks, string jsonString)
         {
             foreach (var h in hooks)
@@ -192,18 +196,29 @@ namespace Emby.Webhooks
 
             }
         }
-       
-        public async Task<bool> SendHook (PluginConfiguration.Hook h, string jsonString)
+
+        public async Task<bool> SendHook(PluginConfiguration.Hook h, string jsonString)
         {
             _logger.Debug("Sending paylod to {0}", h.URL);
             _logger.Debug(jsonString);
 
             using (var client = new HttpClient())
             {
-                var httpContent = new StringContent(jsonString, System.Text.Encoding.UTF8, "application/json");
-                var response = await client.PostAsync(h.URL, httpContent);
-                var responseString = await response.Content.ReadAsStringAsync();
-                _logger.Debug(response.StatusCode.ToString());
+                    var httpContent = new StringContent(jsonString, System.Text.Encoding.UTF8, "application/json");
+                    var response = await client.PostAsync(h.URL, httpContent);
+                    var responseString = await response.Content.ReadAsStringAsync();
+                    _logger.Debug(response.StatusCode.ToString());
+                
+                /*
+                HttpRequestOptions options = new HttpRequestOptions();
+                options.Url = h.URL;
+                options.RequestContent = jsonString;
+                
+                var response = await _httpClient.SendAsync(options, HttpMethod.Post.ToString()); //h.URL, httpContent
+                //Not sure how to implement this with IHTTPCliens
+                //var responseString = await response.Content.ReadAStringsync();
+                _logger.Debug("Response Stauts:" + response.StatusCode.ToString());
+                */
             }
             return true;
         }
@@ -227,15 +242,17 @@ namespace Emby.Webhooks
             return _jsonSerializer.SerializeToString(j);
         }
 
-        public string buildJson (PlaybackProgressEventArgs e, string trigger)
+        public string buildJson(PlaybackProgressEventArgs e, string trigger)
         {
             // User u = e.Users.FirstOrDefault();
 
-            envelope j = new envelope() {
+            envelope j = new envelope()
+            {
                 @event = trigger,
 
                 Account = new Account() { },
-                Player = new Player() {
+                Player = new Player()
+                {
                     title = e.ClientName,
                     uuid = e.DeviceId.ToString()
                 },
@@ -246,8 +263,8 @@ namespace Emby.Webhooks
                     grandparentTitle = e.Item.Parent.Parent.Name,
                     parentTitle = e.Item.Parent.Name,
                     guid = e.Item.Id.ToString()
-                    
-                   }
+
+                }
             };
 
             return _jsonSerializer.SerializeToString(j);

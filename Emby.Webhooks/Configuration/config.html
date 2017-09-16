@@ -5,14 +5,14 @@
 </head>
 <body>
     <div data-role="page" class="page type-interior pluginConfigurationPage smtpConfigurationPage" data-require="emby-select,emby-checkbox,emby-input,emby-button">
-    
+
 
         <div id="itemTemplate" class="paperList" style="display:none;">
             <div class="listItem">
                 <div class="listItemBody two-line">
                     <div>
                         <div class="inputContainer">
-                            <input is="emby-input" type="text" class="txtUrl"/>
+                            <input is="emby-input" type="text" class="txtUrl" />
                             <div class="fieldDescription">
                                 Url
                             </div>
@@ -41,29 +41,29 @@
                             <span>Item Added</span>
                         </label>
 
-                                    
+
                     </div>
                     <div>
                         <h3>Media Types</h3>
-                            <label class="checkboxContainer" style="float:left; width:auto; padding-right:10px">
-                                <input is="emby-checkbox" type="checkbox" class="chkMovies" />
-                                <span>Movies</span>
-                            </label>
-                            <label class="checkboxContainer" style="float:left; width:auto; padding-right:10px">
-                                <input is="emby-checkbox" type="checkbox" class="chkEpisodes" />
-                                <span>TV Shows</span>
-                            </label>
-                            <label class="checkboxContainer" style="float:left; width:auto; padding-right:10px">
-                                <input is="emby-checkbox" type="checkbox" class="chkSongs" />
-                                <span>Music</span>
-                            </label>
+                        <label class="checkboxContainer" style="float:left; width:auto; padding-right:10px">
+                            <input is="emby-checkbox" type="checkbox" class="chkMovies" />
+                            <span>Movies</span>
+                        </label>
+                        <label class="checkboxContainer" style="float:left; width:auto; padding-right:10px">
+                            <input is="emby-checkbox" type="checkbox" class="chkEpisodes" />
+                            <span>TV Shows</span>
+                        </label>
+                        <label class="checkboxContainer" style="float:left; width:auto; padding-right:10px">
+                            <input is="emby-checkbox" type="checkbox" class="chkSongs" />
+                            <span>Music</span>
+                        </label>
                     </div>
-                    
-                    
 
-                
-               </div>
-                 <button title="Delete" class="btnDeleteDevice paper-icon-button-light removeHook" type="button" is="paper-icon-button-light"><i class="md-icon">delete</i></button>
+
+
+
+                </div>
+                <button title="Delete" class="btnDeleteDevice paper-icon-button-light removeHook" type="button" is="paper-icon-button-light"><i class="md-icon">delete</i></button>
 
             </div>
         </div>
@@ -116,36 +116,34 @@
                                         <span>Songs</span>
                                     </label>
                                 </div>
-                              
+
 
                             </div>
                             <button title="Delete" class="btnDeleteDevice paper-icon-button-light removeHook" type="button" is="paper-icon-button-light"><i class="md-icon">delete</i></button>
 
                         </div>
                     </div> -->
-
-                    
-                                 <!--
+                    <!--
                     <div style="height:0; overflow: hidden;">
                         <input type="text" name="fakeusernameremembered" tabindex="-1" />
                         <input type="password" name="fakepasswordremembered" tabindex="-1" />
                     </div>
                     -->
-                   
-                    
-                        <h1 style="display:inline-block;vertical-align:middle;">Webhooks</h1>
-                        <button title="Add" class="raised btnAddDevice submit mini emby-button" id="testNotification"
-                                style="margin-left:1em;" type="button" is="emby-button">
-                            <i class="md-icon">add</i>
-                            <span>Add</span>
-                        </button>
+
+
+                    <h1 style="display:inline-block;vertical-align:middle;">Webhooks</h1>
+                    <button title="Add" class="raised btnAddDevice submit mini emby-button" id="testNotification"
+                            style="margin-left:1em;" type="button" is="emby-button">
+                        <i class="md-icon">add</i>
+                        <span>Add</span>
+                    </button>
                     <div id="Hooks">
 
 
                     </div>
-                    
-                    
-                    <br/>
+
+
+                    <br />
                     <div>
                         <button is="emby-button" type="submit" class="raised button-submit block"><span>Save</span></button>
                     </div>
@@ -170,7 +168,7 @@
                     });
                 }
 
-                
+
 
                 $('.smtpConfigurationPage').on('pageinit', function (event) {
 
@@ -191,7 +189,7 @@
 
                         Dashboard.hideLoadingMsg();
 
-                        
+
                     });
 
                     $('.smtpConfigurationForm', page).on('submit', function (e) {
@@ -202,7 +200,7 @@
                         var config = { Hooks: [] };
                         $('#Hooks .listItem', form).each(function (i) {
                             var a = $(this).find('.txtUrl').first().val();
-                            
+
 
                             config.Hooks.push(
                                 {
@@ -216,7 +214,7 @@
                                     withEpisodes: $(this).find('.chkEpisodes').first().checked(),
                                     withSongs: $(this).find('.chkSongs').first().checked(),
                                     onItemAdded: $(this).find('.chkOnItemAdded').first().checked()
-                                    
+
                                 }
                                 );
                         });
@@ -227,8 +225,8 @@
                             Dashboard.processPluginConfigurationUpdateResult);
                         return false;
                     });
-                    
-                    
+
+
 
                 }).on('pageshow', function (event) {
 
@@ -239,7 +237,7 @@
                     ApiClient.getPluginConfiguration(pluginId).then(function (config) {
                         for (var i in config.Hooks) {
                             var a = $('#itemTemplate').clone();
-                            
+
                             $(a).show();
                             $('#Hooks', page).append(
                                 a
@@ -259,7 +257,7 @@
                             $(a).find('.chkEpisodes').first().checked(config.Hooks[i].withEpisodes || false);
                             $(a).find('.chkSongs').first().checked(config.Hooks[i].withSongs || false);
                             $(a).find('.chkOnItemAdded').first().checked(config.Hooks[i].onItemAdded || false);
-                            
+
 
 
                         }

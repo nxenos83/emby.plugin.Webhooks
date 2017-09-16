@@ -19,7 +19,7 @@ namespace Emby.Webhooks
         {
             get
             {
-               return "Webhooks";
+                return "Webhooks";
             }
         }
 
@@ -32,6 +32,13 @@ namespace Emby.Webhooks
         }
 
         public static Plugin Instance { get; private set; }
+
+        private Guid _id = new Guid("C55C17A0-0E7E-495B-9A1D-48BAE4D55FB3");
+        public override Guid Id
+        {
+            get { return _id; }
+        }
+
 
         public IEnumerable<PluginPageInfo> GetPages()
         {

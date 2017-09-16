@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.26228.12
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Emby.Webhooks", "Emby.Webhooks\Emby.Webhooks.csproj", "{6E2C1EF8-3722-40A9-A46B-E1F965DADDBD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Webhooks", "Emby.Webhooks\Webhooks.csproj", "{93E4D80F-8FEA-47FD-99F0-E9AC12EE395D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,10 +11,10 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{6E2C1EF8-3722-40A9-A46B-E1F965DADDBD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{6E2C1EF8-3722-40A9-A46B-E1F965DADDBD}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{6E2C1EF8-3722-40A9-A46B-E1F965DADDBD}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{6E2C1EF8-3722-40A9-A46B-E1F965DADDBD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{93E4D80F-8FEA-47FD-99F0-E9AC12EE395D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{93E4D80F-8FEA-47FD-99F0-E9AC12EE395D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{93E4D80F-8FEA-47FD-99F0-E9AC12EE395D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{93E4D80F-8FEA-47FD-99F0-E9AC12EE395D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
