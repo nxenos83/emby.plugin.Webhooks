@@ -1,4 +1,5 @@
-﻿using MediaBrowser.Controller.Library;
+﻿using MediaBrowser.Controller;
+using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Plugins;
 using MediaBrowser.Controller.Session;
 using System;
@@ -28,6 +29,8 @@ namespace Emby.Webhooks
         private readonly IJsonSerializer _jsonSerializer;
         private readonly ILibraryManager _libraryManager;
         private readonly IHttpClient _httpClient;
+        private readonly INetworkManager _networkManager;
+        private readonly IServerApplicationHost _appHost;
 
         private List<PauseControl> pauseControl = new List<PauseControl>();
         public class PauseControl
@@ -54,7 +57,7 @@ namespace Emby.Webhooks
             get { return "Webhooks"; }
         }
 
-        public Webhooks(ISessionManager sessionManager, IJsonSerializer jsonSerializer, IHttpClient httpClient, ILogManager logManager, IUserDataManager userDataManager, ILibraryManager libraryManager)
+        public Webhooks(ISessionManager sessionManager, IJsonSerializer jsonSerializer, IHttpClient httpClient, ILogManager logManager, IUserDataManager userDataManager, ILibraryManager libraryManager, INetworkManager networkManager, IServerApplicationHost appHost)
         {
             _logger = logManager.GetLogger(Plugin.Instance.Name);
             _libraryManager = libraryManager;
@@ -62,6 +65,8 @@ namespace Emby.Webhooks
             _userDataManager = userDataManager;
             _httpClient = httpClient;
             _jsonSerializer = jsonSerializer;
+            _networkManager = networkManager;
+            _appHost = appHost;
 
             Instance = this;
         }
@@ -121,7 +126,7 @@ namespace Emby.Webhooks
 
                 var hooks = hooksByType(iType).Where(i => i.onPause);
 
-                var jsonString = buildJson(e, "media.pause");
+                var jsonString = buildJson(_sessionManager.GetSession(e.DeviceId.ToString(), e.ClientName, ""), "media.pause");
 
                 SendHooks(hooks, jsonString);
             }
@@ -134,7 +139,7 @@ namespace Emby.Webhooks
                 getPauseControl(e.DeviceId).wasPaused = false;
 
                 var hooks = hooksByType(iType).Where(i => i.onResume);
-                var jsonString = buildJson(e, "media.resume");
+                var jsonString = buildJson(_sessionManager.GetSession(e.DeviceId.ToString(), e.ClientName, ""), "media.resume");
 
                 SendHooks(hooks, jsonString);
             }
@@ -152,7 +157,7 @@ namespace Emby.Webhooks
             //get all configured hooks for onPlay
             var hooks = hooksByType(iType).Where(i => i.onPlay);
 
-            var jsonString = buildJson(e, "media.play");
+            var jsonString = buildJson(_sessionManager.GetSession(e.DeviceId.ToString(), e.ClientName, ""), "media.play");
 
             SendHooks(hooks, jsonString);
         }
@@ -173,7 +178,7 @@ namespace Emby.Webhooks
             if (hooks.Count() > 0)
             {
                 _logger.Debug("{0} webhooks for pause events", hooks.Count().ToString());
-                var jsonString = buildJson(e, "media.stop");
+                var jsonString = buildJson(_sessionManager.GetSession(e.DeviceId.ToString(), e.ClientName, ""), "media.stop");
                 SendHooks(hooks, jsonString);
             }
         }
@@ -242,7 +247,7 @@ namespace Emby.Webhooks
             return _jsonSerializer.SerializeToString(j);
         }
 
-        public string buildJson(PlaybackProgressEventArgs e, string trigger)
+        public string buildJson(SessionInfo e, string trigger)
         {
             // User u = e.Users.FirstOrDefault();
 
@@ -250,21 +255,40 @@ namespace Emby.Webhooks
             {
                 @event = trigger,
 
-                Account = new Account() { },
+                Server = new Server()
+                {
+                    uuid = _appHost.SystemId,
+                    title = _appHost.FriendlyName
+                },
+                Account = new Account() {
+                    id = e.UserId.ToString(),
+                    title = e.UserName
+                },
                 Player = new Player()
                 {
-                    title = e.ClientName,
-                    uuid = e.DeviceId.ToString()
+                    local = _networkManager.IsInPrivateAddressSpace(e.RemoteEndPoint.ToString()),
+                    title = e.Client,
+                    uuid = e.DeviceId.ToString(),
+                    name = e.DeviceName,
+                    publicAddress = e.RemoteEndPoint.ToString()
                 },
                 Metadata = new Metadata()
                 {
-                    type = _libraryManager.GetContentType(e.Item),
-                    title = e.Item.Name,
-                    grandparentTitle = e.Item.Parent.Parent.Name,
-                    parentTitle = e.Item.Parent.Name,
-                    guid = e.Item.Id.ToString()
-
-                }
+                    type = _libraryManager.GetContentType(e.FullNowPlayingItem),
+                    title = e.FullNowPlayingItem.Name,
+                    grandparentTitle = e.FullNowPlayingItem.Parent.Parent.Name,
+                    parentTitle = e.FullNowPlayingItem.Parent.Name,
+                    guid = e.FullNowPlayingItem.Id.ToString(),
+                    runTimeTicks = e.FullNowPlayingItem.RunTimeTicks,
+                    index = e.FullNowPlayingItem.IndexNumber,
+                    parentIndex = e.FullNowPlayingItem.ParentIndexNumber
+                },
+                Session = new Session()
+                {
+                    sessionId = e.Id,
+                    positionTicks = e.PlayState.PositionTicks,
+                    timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")
+        }
             };
 
             return _jsonSerializer.SerializeToString(j);

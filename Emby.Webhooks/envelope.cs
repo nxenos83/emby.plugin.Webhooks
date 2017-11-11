@@ -16,6 +16,7 @@ namespace Emby.Webhooks
         public Server Server { get; set; }
         public Player Player { get; set; }
         public Metadata Metadata { get; set; }
+        public Session Session { get; set; }
 
     }
 
@@ -40,6 +41,8 @@ namespace Emby.Webhooks
         public string publicAddress { get; set; }
         public string title { get; set; }
         public string uuid { get; set; }
+
+        public string name { get; set; }
     }
 
     public class Metadata
@@ -58,8 +61,8 @@ namespace Emby.Webhooks
         public string grandparentTitle { get; set; }
         public string parentTitle { get; set; }
         public string summary { get; set; }
-        public int index { get; set; }
-        public int parentIndex { get; set; }
+        public int? index { get; set; }
+        public int? parentIndex { get; set; }
         public int ratingCount { get; set; }
         public string thumb { get; set; }
         public string art { get; set; }
@@ -68,6 +71,15 @@ namespace Emby.Webhooks
         public string grandparentArt { get; set; }
         public int addedAt { get; set; }
         public int updatedAt { get; set; }
+
+        public long? runTimeTicks { get; set; }
+    }
+
+    public class Session
+    {
+        public string sessionId { get; set; }
+        public long? positionTicks { get; set; }
+        public string timestamp { get; set; }
     }
 
 }
