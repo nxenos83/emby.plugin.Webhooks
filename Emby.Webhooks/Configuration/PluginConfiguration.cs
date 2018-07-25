@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -35,6 +35,9 @@ namespace Emby.Webhooks.Configuration
             public bool withMovies { get; set; }
             public bool withEpisodes { get; set; }
             public bool withSongs { get; set; }
+
+            public string msgPlayback { get; set; }
+            public string msgAdded { get; set; }
 
         }
 

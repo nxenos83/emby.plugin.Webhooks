@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -27,13 +27,13 @@ namespace Emby.Webhooks
         {
             get
             {
-                return "Webhooks for Emby";
+                return "Webhook handler for Emby";
             }
         }
 
         public static Plugin Instance { get; private set; }
 
-        private Guid _id = new Guid("C55C17A0-0E7E-495B-9A1D-48BAE4D55FB3");
+        private Guid _id = new Guid("fda427d3-cb73-4b3f-8e11-c67a61f7a8ed");
         public override Guid Id
         {
             get { return _id; }
